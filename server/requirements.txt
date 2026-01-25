@@ -5,6 +5,5 @@ sqlalchemy
 psycopg2-binary
 google-generativeai
 python-dotenv
-pdf2image
-Pillow
+google-generativeai
 gunicorn
