@@ -8,10 +8,7 @@ load_dotenv()
 app = FastAPI(title="Medical Component Handler API")
 
 # Configure CORS
-origins = [
-    "http://localhost:5173",  # Vite default
-    "http://localhost:3000",
-]
+origins = ["*"]
 
 app.add_middleware(
     CORSMiddleware,
