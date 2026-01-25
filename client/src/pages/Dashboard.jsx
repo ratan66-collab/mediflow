@@ -5,6 +5,7 @@ import RangeBar from '../components/visualizations/RangeBar';
 import BodyMap from '../components/visualizations/BodyMap';
 import InsightCard from '../components/visualizations/InsightCard';
 import { useAuth } from '../contexts/AuthContext';
+import { endpoints } from '../config';
 
 export default function Dashboard() {
     const [file, setFile] = useState(null);
@@ -60,7 +61,7 @@ export default function Dashboard() {
         formData.append('file', file);
 
         try {
-            const response = await fetch('http://127.0.0.1:8000/api/reports/analyze', {
+            const response = await fetch(endpoints.analyze, {
                 method: 'POST',
                 body: formData,
             });
@@ -87,6 +88,7 @@ export default function Dashboard() {
         unit: m.unit
     })).filter(d => !isNaN(d.value)) || [];
 
+    // Placeholder to avoid replacement error before verifying
     // Collect all affected organs
     const allAffectedOrgans = result?.metrics?.flatMap(m => m.insights?.affected_organs || []).filter(Boolean) || [];
     const uniqueOrgans = [...new Set(allAffectedOrgans)];

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { Send, Activity, Calendar as CalendarIcon, Trophy, HeartPulse, Clock, CheckCircle } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
+import { endpoints } from '../config';
 
 export default function Physio() {
     const { user } = useAuth();
@@ -67,7 +68,7 @@ export default function Physio() {
         setLoading(true);
 
         try {
-            const res = await fetch('http://127.0.0.1:8000/api/physio/consult', {
+            const res = await fetch(endpoints.consult, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ message: userMsg.content }),
@@ -225,8 +226,8 @@ export default function Physio() {
                     <div className="grid grid-cols-7 gap-2">
                         {getCalendarDays().map((d, i) => (
                             <div key={i} className={`aspect-square rounded-lg flex flex-col items-center justify-center border ${d.isActive
-                                    ? 'bg-emerald-500/20 border-emerald-500/50 text-emerald-400'
-                                    : 'bg-slate-950 border-slate-800 text-slate-600'
+                                ? 'bg-emerald-500/20 border-emerald-500/50 text-emerald-400'
+                                : 'bg-slate-950 border-slate-800 text-slate-600'
                                 }`}>
                                 <span className="text-xs font-bold">{d.dayNum}</span>
                                 {d.isActive && <CheckCircle size={10} className="mt-1" />}
