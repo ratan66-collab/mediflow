@@ -86,7 +86,7 @@ const BodyMap = ({ affectedOrgans = [] }) => {
             id: 'large_intestine',
             label: 'Large Intestine',
             keywords: ['colon', 'bowel', 'intestine'],
-            path: 'M80 200 H120 V250 H80 V200 M85 205 H115 V245 H85 V205', // Simple Frame
+
             // More organic path
             path: 'M75 210 Q75 200 100 200 Q125 200 125 210 V250 Q125 260 100 260 Q75 260 75 250 Z',
             color: '#fca5a5', // Light Pink
