@@ -1,0 +1,9 @@
+fastapi[standard]
+uvicorn
+python-multipart
+sqlalchemy
+psycopg2-binary
+google-generativeai
+python-dotenv
+pdf2image
+Pillow
