@@ -1,4 +1,4 @@
-```javascript
+
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Upload, FileText, AlertCircle, CheckCircle, Loader2, Calendar, ChevronRight, ChevronDown } from 'lucide-react';
@@ -25,7 +25,7 @@ export default function ReportUpload() {
         const fetchReports = async () => {
             // If we are in "Demo Mode" (no supabase), fallback to localStorage
             if (!supabase) {
-                const key = `user_documents_${ user.email } `;
+                const key = "user_documents_" + user.email;
                 try {
                     const saved = localStorage.getItem(key);
                     if (saved) setDocuments(JSON.parse(saved));
@@ -76,7 +76,7 @@ export default function ReportUpload() {
 
                 if (!response.ok) {
                     const errData = await response.json();
-                    throw new Error(errData.detail || `Failed to analyze ${ currentFile.name } `);
+                    throw new Error(errData.detail || "Failed to analyze " + currentFile.name);
                 }
 
                 const data = await response.json();
@@ -101,7 +101,7 @@ export default function ReportUpload() {
 
             } catch (err) {
                 console.error(err);
-                setError(`Error on ${ currentFile.name }: ${ err.message } `);
+                setError("Error on " + currentFile.name + ": " + err.message);
                 // Continue to next file even if one fails? 
                 // Let's decide to continue best effort
             }
@@ -113,7 +113,7 @@ export default function ReportUpload() {
 
         // Final Sync for Fallback
         if (user?.email && !supabase) {
-            localStorage.setItem(`user_documents_${ user.email } `, JSON.stringify(updatedDocs));
+            localStorage.setItem("user_documents_" + user.email, JSON.stringify(updatedDocs));
         }
 
         setQueue([]); // Clear Queue
@@ -140,7 +140,7 @@ export default function ReportUpload() {
     const handleLoadToDashboard = (doc) => {
         if (!user?.email) return;
         // Save this specific doc as the "Active" dashboard analysis
-        localStorage.setItem(`dashboard_analysis_${ user.email } `, JSON.stringify(doc));
+        localStorage.setItem("dashboard_analysis_" + user.email, JSON.stringify(doc));
         // Redirect to dashboard
         navigate('/');
     };
@@ -288,10 +288,7 @@ export default function ReportUpload() {
                                                 <div className="text-xs text-slate-400">{m.name}</div>
                                                 <div className="text-sm font-bold text-white">{m.value} <span className="text-[10px] text-slate-500">{m.unit}</span></div>
                                             </div>
-                                            <span className={`text - [10px] px - 2 py - 1 rounded border ${
-    m.status === 'Normal' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' :
-        'bg-red-500/10 text-red-400 border-red-500/20'
-} `}>
+                                            <span className={"text-[10px] px-2 py-1 rounded border " + (m.status === 'Normal' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 'bg-red-500/10 text-red-400 border-red-500/20')}>
                                                 {m.status}
                                             </span>
                                         </div>
