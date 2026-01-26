@@ -14,8 +14,8 @@ const InsightCard = ({ metric }) => {
 
     return (
         <div className={`rounded-xl border transition-all duration-300 ${isNormal
-                ? 'bg-slate-900/40 border-slate-800'
-                : 'bg-slate-900/60 border-slate-700 shadow-lg shadow-blue-900/10'
+            ? 'bg-slate-900/40 border-slate-800'
+            : 'bg-slate-900/60 border-slate-700 shadow-lg shadow-blue-900/10'
             }`}>
             <div
                 className="p-4 flex items-center justify-between cursor-pointer hover:bg-slate-800/30 transition-colors rounded-xl"
@@ -23,16 +23,16 @@ const InsightCard = ({ metric }) => {
             >
                 <div className="flex items-center gap-4">
                     <div className={`w-10 h-10 rounded-full flex items-center justify-center ${metric.status === 'Critical' || metric.status === 'High' ? 'bg-red-500/20 text-red-400' :
-                            metric.status === 'Low' ? 'bg-amber-500/20 text-amber-400' :
-                                'bg-emerald-500/20 text-emerald-400'
+                        metric.status === 'Low' ? 'bg-amber-500/20 text-amber-400' :
+                            'bg-emerald-500/20 text-emerald-400'
                         }`}>
                         <span className="font-bold text-xs">{metric.value}</span>
                     </div>
                     <div>
                         <h4 className="text-white font-medium">{metric.name}</h4>
                         <div className={`text-xs ${metric.status === 'Critical' || metric.status === 'High' ? 'text-red-400' :
-                                metric.status === 'Low' ? 'text-amber-400' :
-                                    'text-emerald-400'
+                            metric.status === 'Low' ? 'text-amber-400' :
+                                'text-emerald-400'
                             }`}>
                             {metric.status.toUpperCase()}
                         </div>
@@ -48,7 +48,7 @@ const InsightCard = ({ metric }) => {
             </div>
 
             {/* Expandable Content (Only for abnormal results) */}
-            <div className={`overflow-hidden transition-all duration-300 ${expanded ? 'max-h-[500px] opacity-100' : 'max-h-0 opacity-0'}`}>
+            <div className={`overflow-hidden transition-all duration-300 ${expanded ? 'max-h-[1000px] opacity-100' : 'max-h-0 opacity-0'}`}>
                 <div className="p-4 pt-0 border-t border-slate-800/50 space-y-4">
 
                     {/* Causes */}

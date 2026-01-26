@@ -15,7 +15,7 @@ def analyze_medical_report(file_bytes: bytes, mime_type: str):
     if not configure_genai():
         return {"error": "Server configuration error: Missing API Key"}
 
-    model = genai.GenerativeModel('gemini-flash-latest')
+    model = genai.GenerativeModel('gemini-1.5-flash')
 
     prompt = """
     You are an expert medical AI assistant. Your task is to extract structured data from this medical report.
