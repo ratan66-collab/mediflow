@@ -98,8 +98,25 @@ export default function Dashboard() {
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-[#bef264] p-8 rounded-3xl shadow-xl shadow-[#bef264]/10 border border-[#bef264]/50">
                 <div>
                     <h2 className="text-5xl font-display font-bold text-[#111111] tracking-wide uppercase">Health Overview</h2>
-                    <div className="inline-block mt-2 bg-[#111111]/10 border border-[#111111]/20 px-3 py-1 rounded-full text-sm font-bold text-[#111111]">
-                        LATEST REPORT ANALYSIS
+                    <div className="flex flex-wrap items-center gap-3 mt-3">
+                        <div className="bg-[#111111]/10 border border-[#111111]/20 px-3 py-1 rounded-full text-sm font-bold text-[#111111]">
+                            LATEST REPORT ANALYSIS
+                        </div>
+                        {result?.patient_name && (
+                            <div className="bg-[#111111] text-[#bef264] px-3 py-1 rounded-full text-sm font-bold">
+                                {result.patient_name}
+                            </div>
+                        )}
+                        {result?.report_date && (
+                            <div className="bg-[#111111] text-[#bef264] px-3 py-1 rounded-full text-sm font-bold">
+                                {result.report_date}
+                            </div>
+                        )}
+                        {result?.test_type && (
+                            <div className="bg-[#111111] text-[#bef264] px-3 py-1 rounded-full text-sm font-bold">
+                                {result.test_type}
+                            </div>
+                        )}
                     </div>
                 </div>
 
@@ -180,6 +197,24 @@ export default function Dashboard() {
 
                 {/* Left: Detailed Insights List */}
                 <div className="lg:col-span-2 space-y-6">
+                    {/* Critical Findings - High Alert Segment */}
+                    {result?.critical_findings?.length > 0 && (
+                        <div className="rounded-3xl border border-red-500/30 bg-[#1a0f0f] p-6 relative overflow-hidden">
+                            <div className="flex items-center gap-3 mb-4">
+                                <AlertCircle className="text-red-500" size={28} />
+                                <h3 className="text-2xl font-display tracking-wide uppercase text-red-500 m-0">Critical Findings</h3>
+                            </div>
+                            <ul className="space-y-3">
+                                {result.critical_findings.map((finding, idx) => (
+                                    <li key={idx} className="flex items-start gap-3 text-red-100">
+                                        <div className="mt-1.5 w-1.5 h-1.5 rounded-full bg-red-500 flex-shrink-0" />
+                                        <p className="leading-relaxed">{finding}</p>
+                                    </li>
+                                ))}
+                            </ul>
+                        </div>
+                    )}
+
                     <div className="rounded-3xl border border-[#2a2a2a] bg-racing-card p-6 relative overflow-hidden">
                         {/* Header styled like a massive sports banner block */}
                         <div className="bg-racing-accent -m-6 mb-6 p-6 flex justify-between items-center text-[#111111]">

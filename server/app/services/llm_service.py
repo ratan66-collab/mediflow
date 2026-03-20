@@ -67,11 +67,11 @@ def analyze_medical_report(file_bytes: bytes, mime_type: str):
             return {"error": "Groq API currently does not support image analysis. Please upload your medical report as a PDF."}
 
         # ==========================================
-        # STEP 2: JSON Generation using Llama 70B
+        # STEP 2: JSON Generation using Llama 8B
         # ==========================================
-        print("Executing Step 2: Llama 3 JSON Parsing...")
+        print("Executing Step 2: Llama 8B JSON Parsing...")
         llm_response = client.chat.completions.create(
-            model="llama-3.3-70b-versatile",
+            model="llama-3.1-8b-instant",
             messages=[
                 {
                     "role": "system",
