@@ -12,37 +12,8 @@ export default function Dashboard() {
     const [loading, setLoading] = useState(false);
     const { user } = useAuth();
 
-    // Initialize from localStorage if available
-    const [result, setResult] = useState(() => {
-        return null; // Start null, let useEffect sync with user
-    });
-
+    const [result, setResult] = useState(null);
     const [error, setError] = useState(null);
-
-    // Initialize/Load Result when User changes
-    useEffect(() => {
-        if (user?.email) {
-            const key = `dashboard_analysis_${user.email}`;
-            try {
-                const saved = localStorage.getItem(key);
-                if (saved) {
-                    setResult(JSON.parse(saved));
-                } else {
-                    setResult(null);
-                }
-            } catch (e) {
-                console.error(e);
-            }
-        }
-    }, [user]);
-
-    // Auto-save whenever result changes
-    useEffect(() => {
-        if (result && user?.email) {
-            const key = `dashboard_analysis_${user.email}`;
-            localStorage.setItem(key, JSON.stringify(result));
-        }
-    }, [result, user]);
 
     const handleFileChange = (e) => {
         const selected = e.target.files[0];
@@ -157,40 +128,36 @@ export default function Dashboard() {
             )}
 
             {/* Dynamic Stat Cards with Range Bars */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                {/* Explicitly check for key metrics first, or fallback to first 3 items */}
-                {(['Blood Pressure', 'Hemoglobin', 'Blood Sugar']).map((key, i) => {
-                    const metric = result?.metrics?.find(m => m.name.toLowerCase().includes(key.toLowerCase()))
-                        || (result?.metrics && result.metrics[i]);
+            {result?.metrics?.length > 0 && (
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    {(['Blood Pressure', 'Hemoglobin', 'Blood Sugar']).map((key, i) => {
+                        const metric = result.metrics.find(m => m.name.toLowerCase().includes(key.toLowerCase()))
+                            || result.metrics[i];
 
-                    return (
-                        <div key={i} className="p-6 rounded-3xl bg-racing-card border border-[#2a2a2a] relative overflow-hidden group">
-                            {/* Decorative racing line */}
-                            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-racing-dark via-racing-accent to-racing-dark opacity-0 group-hover:opacity-100 transition-opacity" />
+                        if (!metric) return null;
 
-                            <div className="flex justify-between items-start mb-6">
-                                <h3 className="text-racing-text font-display text-2xl tracking-wide uppercase">{metric ? metric.name : key}</h3>
-                                {metric && (
+                        return (
+                            <div key={i} className="p-6 rounded-3xl bg-racing-card border border-[#2a2a2a] relative overflow-hidden group">
+                                <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-racing-dark via-racing-accent to-racing-dark opacity-0 group-hover:opacity-100 transition-opacity" />
+
+                                <div className="flex justify-between items-start mb-6">
+                                    <h3 className="text-racing-text font-display text-2xl tracking-wide uppercase">{metric.name}</h3>
                                     <span className={`text-xs px-3 py-1 font-bold tracking-wider rounded-md border ${metric.status === 'Normal' ? 'bg-[#1a2f22] text-[#4ade80] border-[#22c55e]' :
                                         'bg-red-500/10 text-red-400 border-red-500/30'
                                         }`}>{metric.status.toUpperCase()}</span>
-                                )}
-                            </div>
+                                </div>
 
-                            {metric ? (
                                 <RangeBar
                                     value={typeof metric.value === 'number' ? metric.value : parseFloat(metric.value) || 0}
                                     unit={metric.unit}
                                     status={metric.status}
                                     max={metric.name.includes('Sugar') ? 200 : metric.name.includes('Pressure') ? 180 : 20}
                                 />
-                            ) : (
-                                <div className="text-slate-600 text-sm py-4">No data available</div>
-                            )}
-                        </div>
-                    );
-                })}
-            </div>
+                            </div>
+                        );
+                    })}
+                </div>
+            )}
 
             {/* Main Content Area */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
