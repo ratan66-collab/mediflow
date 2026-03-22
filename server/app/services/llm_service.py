@@ -62,6 +62,9 @@ def analyze_medical_report(file_bytes: bytes, mime_type: str):
             for page in doc:
                 extracted_text += page.get_text() + "\n"
             doc.close()
+            
+            # Hard-cap the text length to ensure lightning-fast processing and avoid massive token payloads
+            extracted_text = extracted_text[:20000]
             print("PDF Text Extraction Complete. Length:", len(extracted_text))
         else:
             return {"error": "Groq API currently does not support image analysis. Please upload your medical report as a PDF."}
