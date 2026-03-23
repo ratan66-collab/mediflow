@@ -20,22 +20,17 @@ export const AuthProvider = ({ children }) => {
                 return;
             }
 
-            if (supabase) {
-                const { data: { session } } = await supabase.auth.getSession();
-                if (session?.user) {
-                    setUser(session.user);
-                }
-
-                // Listen for changes
-                const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-                    setUser(session?.user ?? null);
-                });
-                // If we have a supbase session, loading false. If not, also false.
-                setLoading(false);
-                return () => subscription.unsubscribe();
-            } else {
-                setLoading(false);
-            }
+            // AUTO GUEST LOGIN for Hackathon: Immediately grant access
+            const fakeUser = {
+                id: 'guest-' + Date.now(),
+                email: 'guest@mediflow.com',
+                aud: 'authenticated',
+                role: 'authenticated'
+            };
+            localStorage.setItem('demo_user', JSON.stringify(fakeUser));
+            setUser(fakeUser);
+            setLoading(false);
+            return;
         };
 
         getSession();
