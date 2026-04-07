@@ -9,76 +9,118 @@ export const AuthProvider = ({ children }) => {
     const [user, setUser] = useState(null);
     const [loading, setLoading] = useState(true);
 
+    const fallbackAuth = (email, name = null) => {
+        const fakeUser = {
+            id: 'user-' + Date.now(),
+            email: email || 'user@example.com',
+            user_metadata: name ? { name } : {},
+            aud: 'authenticated',
+            role: 'authenticated'
+        };
+        localStorage.setItem('demo_user', JSON.stringify(fakeUser));
+        setUser(fakeUser);
+        return { error: null };
+    };
+
     useEffect(() => {
-        // Check active sessions and sets the user
         const getSession = async () => {
-            // Check if we have a "demo user" in local storage (Priority for Direct Login)
-            const demoUser = localStorage.getItem('demo_user');
-            if (demoUser) {
-                setUser(JSON.parse(demoUser));
+            const applyFallback = () => {
+                const demoUser = localStorage.getItem('demo_user');
+                if (demoUser) {
+                    setUser(JSON.parse(demoUser));
+                }
                 setLoading(false);
+            };
+
+            if (!supabase) {
+                applyFallback();
                 return;
             }
 
-            // AUTO GUEST LOGIN for Hackathon: Immediately grant access
-            const fakeUser = {
-                id: 'guest-' + Date.now(),
-                email: 'guest@mediflow.com',
-                aud: 'authenticated',
-                role: 'authenticated'
-            };
-            localStorage.setItem('demo_user', JSON.stringify(fakeUser));
-            setUser(fakeUser);
-            setLoading(false);
-            return;
+            try {
+                const { data: { session }, error } = await supabase.auth.getSession();
+                if (error && error.message.includes('fetch')) {
+                    applyFallback();
+                    return;
+                }
+                
+                if (session) {
+                    setUser(session.user);
+                } else {
+                    const demoUser = localStorage.getItem('demo_user');
+                    if (demoUser) {
+                        setUser(JSON.parse(demoUser));
+                    } else {
+                        setUser(null);
+                    }
+                }
+                setLoading(false);
+
+                const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+                    setUser(session?.user || null);
+                });
+
+                return () => subscription?.unsubscribe();
+            } catch (e) {
+                applyFallback();
+            }
         };
 
         getSession();
     }, []);
 
-    const signIn = async (email) => {
-        // DIRECT LOGIN (Bypassing Email Verification per User Request)
-        // This effectively treats any email as a valid login immediately.
+    const signIn = async (email, password) => {
+        if (!supabase) return fallbackAuth(email);
+        
+        try {
+            const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+            if (error && error.message.includes('fetch')) return fallbackAuth(email);
+            return { data, error };
+        } catch (e) {
+            return fallbackAuth(email);
+        }
+    };
 
-        const fakeUser = {
-            id: 'user-' + Date.now(),
-            email: email || 'user@example.com',
-            aud: 'authenticated',
-            role: 'authenticated'
-        };
+    const signUp = async (email, password, name) => {
+        if (!supabase) return fallbackAuth(email, name);
 
-        // We force this simulated login to avoid "Go to Inbox"
-        localStorage.setItem('demo_user', JSON.stringify(fakeUser));
-        setUser(fakeUser);
-
-        return { error: null };
+        try {
+            const { data, error } = await supabase.auth.signUp({
+                email,
+                password,
+                options: { data: { name } }
+            });
+            if (error && error.message.includes('fetch')) return fallbackAuth(email, name);
+            return { data, error };
+        } catch (e) {
+            return fallbackAuth(email, name);
+        }
     };
 
     const signInWithOAuth = async (provider) => {
-        if (!supabase) {
-            // Simulation for demo if Supabase not configured
-            const fakeUser = { id: `demo-${provider}-123`, email: `demo-${provider}@mediflow.com` };
-            localStorage.setItem('demo_user', JSON.stringify(fakeUser));
-            setUser(fakeUser);
-            return { error: null };
-        }
+        if (!supabase) return fallbackAuth(`demo-${provider}@mediflow.com`);
 
-        const { error } = await supabase.auth.signInWithOAuth({
-            provider: provider,
-        });
-        return { error };
+        try {
+            const { error } = await supabase.auth.signInWithOAuth({ provider });
+            if (error && error.message.includes('fetch')) return fallbackAuth(`demo-${provider}@mediflow.com`);
+            return { error };
+        } catch (e) {
+            return fallbackAuth(`demo-${provider}@mediflow.com`);
+        }
     };
 
     const signOut = async () => {
         localStorage.removeItem('demo_user');
         setUser(null);
         if (supabase) {
-            await supabase.auth.signOut();
+            try {
+                await supabase.auth.signOut();
+            } catch (e) {}
         }
     };
 
     return (
-        <AuthContext.Provider value={{ user, signIn, signInWithOAuth, signOut, loading }}>
+        <AuthContext.Provider value={{ user, signIn, signUp, signInWithOAuth, signOut, loading }}>
             {!loading && children}
         </AuthContext.Provider>
     );

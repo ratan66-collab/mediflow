@@ -133,7 +133,7 @@ export default function Physio() {
     };
 
     return (
-        <div className="h-[calc(100vh-6rem)] grid grid-cols-1 lg:grid-cols-3 gap-6 relative">
+        <div className="h-[calc(100vh-6rem)] max-w-5xl mx-auto w-full relative drop-shadow-xl">
 
             {/* Active Session Overlay (Stopwatch) */}
             {isTimerActive && (
@@ -152,8 +152,8 @@ export default function Physio() {
                 </div>
             )}
 
-            {/* Left: Chat & Weekly Plan */}
-            <div className="lg:col-span-2 flex flex-col bg-racing-card rounded-3xl border border-[#2a2a2a] overflow-hidden">
+            {/* Main Chat & Weekly Plan */}
+            <div className="h-full flex flex-col bg-racing-card rounded-3xl border border-[#2a2a2a] overflow-hidden">
                 <div className="p-6 flex items-center gap-3 bg-[#111111]">
                     <HeartPulse className="text-racing-accent w-8 h-8" />
                     <h2 className="text-white font-display text-4xl tracking-wider uppercase m-0">Physio Plan Generator</h2>
@@ -214,46 +214,7 @@ export default function Physio() {
                 </form>
             </div>
 
-            {/* Right: Stats & Calendar */}
-            <div className="space-y-6">
 
-                {/* Visual Calendar */}
-                <div className="p-6 bg-racing-card rounded-3xl border border-[#2a2a2a]">
-                    <h3 className="text-racing-accent font-display tracking-widest text-2xl uppercase mb-4 flex items-center gap-2">
-                        <CalendarIcon size={20} />
-                        Consistency Tracker
-                    </h3>
-                    <div className="grid grid-cols-7 gap-2">
-                        {getCalendarDays().map((d, i) => (
-                            <div key={i} className={`aspect-square rounded-xl flex flex-col items-center justify-center border-2 ${d.isActive
-                                ? 'bg-[#bef26433] border-racing-accent text-racing-accent'
-                                : 'bg-[#1a1a1a] border-[#333] text-gray-600'
-                                }`}>
-                                <span className={`text-base font-bold ${d.isActive ? 'text-racing-accent' : ''}`}>{d.dayNum}</span>
-                                {d.isActive && <CheckCircle size={10} className="mt-1" />}
-                            </div>
-                        ))}
-                    </div>
-                </div>
-
-                {/* Progress Graph */}
-                <div className="p-6 bg-racing-card rounded-3xl border border-[#2a2a2a] flex-1">
-                    <h3 className="text-racing-accent font-display tracking-widest text-2xl uppercase mb-4 flex items-center gap-2">
-                        <Activity size={20} />
-                        Minutes this Week
-                    </h3>
-                    <div className="h-40 w-full">
-                        <ResponsiveContainer width="100%" height="100%">
-                            <BarChart data={history.slice(-7)}>
-                                <Bar dataKey="duration" fill="#bef264" radius={[4, 4, 0, 0]} />
-                                <Tooltip cursor={{ fill: '#333' }} contentStyle={{ backgroundColor: '#111', border: '1px solid #333' }} />
-                                <XAxis dataKey="date" hide />
-                            </BarChart>
-                        </ResponsiveContainer>
-                    </div>
-                </div>
-
-            </div>
         </div>
     );
 }

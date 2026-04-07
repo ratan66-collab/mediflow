@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Upload, FileText, AlertCircle, CheckCircle, Loader2, Calendar, ChevronRight, ChevronDown } from 'lucide-react';
@@ -13,87 +12,128 @@ export default function ReportUpload() {
     const [processingIndex, setProcessingIndex] = useState(-1);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
+    const [processingListId, setProcessingListId] = useState(null); // Track individually analyzed docs
 
     // List of saved documents
     const [documents, setDocuments] = useState([]);
     // Currently selected/expanded document
     const [expandedDoc, setExpandedDoc] = useState(null);
 
-    // 1. Load Documents from Supabase
+    // 1. Load Documents from Supabase / Memory
     useEffect(() => {
         if (!user) return;
         const fetchReports = async () => {
-            // If we are in "Demo Mode" (no supabase), fallback to localStorage
-            if (!supabase) {
+            let cloudFailed = false;
+            if (supabase) {
+                try {
+                    const { data, error } = await supabase
+                        .from('reports')
+                        .select('*')
+                        .order('created_at', { ascending: false });
+
+                    if (data && !error) {
+                        const validDocs = data.map(row => ({
+                            id: row.id,
+                            name: row.file_name,
+                            date: new Date(row.created_at).toLocaleDateString(),
+                            ...row.analysis_json
+                        }));
+                        setDocuments(validDocs);
+                        return; // Successfully fetched from cloud
+                    } else {
+                        cloudFailed = true;
+                    }
+                } catch(e) {
+                    cloudFailed = true;
+                }
+            } else {
+                cloudFailed = true;
+            }
+
+            if (cloudFailed) {
                 const key = "user_documents_" + user.email;
                 try {
                     const saved = localStorage.getItem(key);
                     if (saved) setDocuments(JSON.parse(saved));
                 } catch (e) { }
-                return;
-            }
-
-            const { data, error } = await supabase
-                .from('reports')
-                .select('*')
-                .order('created_at', { ascending: false });
-
-            if (data) {
-                const validDocs = data.map(row => ({
-                    id: row.id,
-                    name: row.file_name,
-                    date: new Date(row.created_at).toLocaleDateString(),
-                    ...row.analysis_json
-                }));
-                setDocuments(validDocs);
             }
         };
         fetchReports();
     }, [user]);
 
-    // Process the Queue
+    // Helpers to convert to Base64 to manually cache the raw file when bypassing backend analysis
+    const fileToBase64 = (file) => new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = error => reject(error);
+    });
+
+    const handleSaveOnly = async () => {
+        if (queue.length === 0) return;
+        setLoading(true);
+        setError(null);
+        
+        try {
+            const newDocs = [];
+            for (let i = 0; i < queue.length; i++) {
+                const currentFile = queue[i];
+                const base64Data = await fileToBase64(currentFile);
+                newDocs.push({
+                    id: Date.now() + i,
+                    name: currentFile.name,
+                    date: new Date().toLocaleDateString(),
+                    fileData: base64Data, // Save raw DataURL
+                    metrics: null // Null metrics means it's unanalyzed
+                });
+            }
+
+            const updatedDocs = [...newDocs, ...documents];
+            setDocuments(updatedDocs);
+
+            if (user?.email) {
+                localStorage.setItem("user_documents_" + user.email, JSON.stringify(updatedDocs));
+            }
+            
+            setQueue([]);
+        } catch(e) {
+            setError("Storage limits hit or read failed! Please clear some old documents.");
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    // Process the Queue Fully
     const handleBatchAnalyze = async () => {
         if (queue.length === 0) return;
         setLoading(true);
         setProcessingIndex(0);
         setError(null);
 
-        // We process sequentially to avoid overwhelming the backend/rate limits
         const newDocs = [];
 
         for (let i = 0; i < queue.length; i++) {
             setProcessingIndex(i);
             const currentFile = queue[i];
-            console.log(`Starting analysis for file: ${currentFile.name}`);
 
             const formData = new FormData();
             formData.append('file', currentFile);
 
             try {
-                console.log(`Sending POST request to ${endpoints.analyze}...`);
                 const response = await fetch(endpoints.analyze, {
                     method: 'POST',
                     body: formData,
                 });
-                console.log(`Received Response Status: ${response.status}`);
 
                 if (!response.ok) {
-                    const errText = await response.text();
-                    console.error("API Error Response:", errText);
-                    let errData;
-                    try {
-                        errData = JSON.parse(errText);
-                    } catch (parseErr) {
-                        throw new Error(`Server returned ${response.status}: ${errText}`);
-                    }
-                    throw new Error(errData.detail || "Failed to analyze " + currentFile.name);
+                    const errData = await response.json();
+                    throw new Error(errData.detail || 'Failed to analyze report');
                 }
 
                 const data = await response.json();
-                console.log("Parsed JSON Data successfully:", data);
 
                 const newDoc = {
-                    id: Date.now() + i, // ensure unique ID
+                    id: Date.now() + i,
                     name: currentFile.name,
                     date: new Date().toLocaleDateString(),
                     ...data
@@ -107,29 +147,77 @@ export default function ReportUpload() {
                         user_id: user.id,
                         file_name: currentFile.name,
                         analysis_json: data
-                    });
+                    }).catch(e => console.log('supaerr'));
                 }
-
             } catch (err) {
-                console.error("Fetch Exception generated:", err);
                 setError("Error on " + currentFile.name + ": " + err.message);
-                // Continue to next file even if one fails
             }
         }
 
-        // Update Local State with all new docs
         const updatedDocs = [...newDocs, ...documents];
         setDocuments(updatedDocs);
 
-        // Final Sync for Fallback
-        if (user?.email && !supabase) {
-            localStorage.setItem("user_documents_" + user.email, JSON.stringify(updatedDocs));
+        if (user?.email) {
+            try {
+                localStorage.setItem("user_documents_" + user.email, JSON.stringify(updatedDocs));
+            } catch(e){}
         }
 
         setQueue([]); // Clear Queue
         setProcessingIndex(-1);
         setLoading(false);
     };
+
+    // Trigger explicit Analysis from List UI
+    const handleAnalyzeFromList = async (e, docToAnalyze) => {
+        e.stopPropagation();
+        if (!docToAnalyze.fileData) {
+            setError("Original file data is missing or corrupted. Please re-upload.");
+            return;
+        }
+
+        setProcessingListId(docToAnalyze.id);
+        setError(null);
+        
+        try {
+            // Convert base64 back to simulated file
+            const res = await fetch(docToAnalyze.fileData);
+            const blob = await res.blob();
+            const file = new File([blob], docToAnalyze.name, { type: blob.type || 'application/pdf' });
+
+            const formData = new FormData();
+            formData.append('file', file);
+
+            const response = await fetch(endpoints.analyze, {
+                method: 'POST',
+                body: formData,
+            });
+
+            if (!response.ok) {
+                const errData = await response.json();
+                throw new Error(errData.detail || 'Failed to analyze report');
+            }
+
+            const data = await response.json();
+
+            // Update main state safely substituting the null fields with fresh Gemini AI responses
+            const updatedDocs = documents.map(d => {
+                if (d.id === docToAnalyze.id) {
+                    return { ...d, ...data, fileData: null }; // clear base64 from doc obj to save storage scope
+                }
+                return d;
+            });
+
+            setDocuments(updatedDocs);
+            if (user?.email) localStorage.setItem("user_documents_" + user.email, JSON.stringify(updatedDocs));
+
+        } catch(err) {
+            setError("Analysis failed: " + err.message);
+        } finally {
+            setProcessingListId(null);
+        }
+    };
+
 
     // Handle File Selection (Multiple)
     const handleFileChange = (e) => {
@@ -149,9 +237,7 @@ export default function ReportUpload() {
 
     const handleLoadToDashboard = (doc) => {
         if (!user?.email) return;
-        // Save this specific doc as the "Active" dashboard analysis
         localStorage.setItem("dashboard_analysis_" + user.email, JSON.stringify(doc));
-        // Redirect to dashboard
         navigate('/');
     };
 
@@ -221,19 +307,26 @@ export default function ReportUpload() {
                         ))}
                     </div>
 
-                    <div className="pt-4">
+                    {/* SPLIT ACTION BUTTONS FOR STORAGE */}
+                    <div className="pt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <button
+                            onClick={handleSaveOnly}
+                            className="w-full py-4 bg-[#111111] hover:bg-[#222222] border-2 border-dashed border-[#555] text-gray-300 rounded-xl font-display text-xl tracking-widest uppercase transition-all shadow-xl"
+                        >
+                            SAVE FOR LATER
+                        </button>
                         <button
                             onClick={handleBatchAnalyze}
-                            className="w-full py-4 bg-racing-accent hover:bg-racing-accentHover text-[#111111] rounded-xl font-display text-2xl tracking-widest uppercase transition-all shadow-xl shadow-racing-accent/20"
+                            className="w-full py-4 bg-racing-accent hover:bg-racing-accentHover text-[#111111] rounded-xl font-display text-xl tracking-widest uppercase transition-all shadow-xl shadow-racing-accent/20"
                         >
-                            SAVE & ANALYZE ALL
+                            ANALYZE IMMEDIATELY
                         </button>
                     </div>
                 </div>
             )}
 
             {error && (
-                <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-xl text-red-400 flex items-center gap-3">
+                <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-xl text-red-500 font-bold flex items-center gap-3 uppercase tracking-widest">
                     <AlertCircle /> {error}
                 </div>
             )}
@@ -241,9 +334,9 @@ export default function ReportUpload() {
             {/* Documents List */}
             <div className="space-y-4">
                 {documents.length === 0 && !loading && (
-                    <div className="text-center py-20 text-slate-600 border-2 border-dashed border-slate-800 rounded-3xl">
-                        <FileText className="w-16 h-16 mx-auto mb-4 opacity-20" />
-                        <p>No documents found.</p>
+                    <div className="text-center py-20 text-slate-600 border-2 border-dashed border-[#2a2a2a] rounded-3xl">
+                        <FileText className="w-16 h-16 mx-auto mb-4 opacity-20 text-racing-accent" />
+                        <p className="font-display tracking-widest text-xl uppercase text-[#666]">No documents found in archive.</p>
                     </div>
                 )}
 
@@ -251,56 +344,70 @@ export default function ReportUpload() {
                     <div key={doc.id} className="bg-racing-card border border-[#2a2a2a] rounded-3xl overflow-hidden transition-all hover:border-racing-accent group">
                         {/* Card Header */}
                         <div
-                            onClick={() => toggleExpand(doc)}
-                            className="p-6 flex items-center justify-between cursor-pointer hover:bg-[#222]"
+                            onClick={() => doc.metrics && toggleExpand(doc)}
+                            className={`p-6 flex flex-col md:flex-row md:items-center justify-between transition-colors ${doc.metrics ? 'cursor-pointer hover:bg-[#222]' : 'cursor-default'} gap-4`}
                         >
                             <div className="flex items-center gap-5">
-                                <div className="w-12 h-12 bg-[#222] rounded-full flex items-center justify-center text-racing-accent font-display text-2xl pt-1">
+                                <div className="w-12 h-12 bg-[#222] rounded-full flex items-center justify-center text-racing-accent font-display text-2xl pt-1 flex-shrink-0">
                                     {doc.name.charAt(0).toUpperCase()}
                                 </div>
-                                <div>
-                                    <h3 className="text-white font-bold text-lg leading-tight">{doc.name}</h3>
+                                <div className="min-w-0 flex-1">
+                                    <h3 className="text-white font-bold text-lg leading-tight truncate">{doc.name}</h3>
                                     <div className="flex items-center gap-2 text-xs text-gray-500 mt-1 font-bold uppercase tracking-wider">
-                                        <Calendar size={12} /> {doc.date} &bull; {doc.metrics?.length || 0} METRICS
+                                        <Calendar size={12} /> {doc.date} &bull; {doc.metrics ? `${doc.metrics.length} METRICS` : 'UNANALYZED FILE'}
                                     </div>
                                 </div>
                             </div>
-                            <div className="flex items-center gap-4">
-                                <button
-                                    onClick={(e) => {
-                                        e.stopPropagation();
-                                        handleLoadToDashboard(doc);
-                                    }}
-                                    className="text-[#111111] bg-racing-accent px-4 py-2 rounded-full font-display tracking-widest uppercase hover:bg-racing-accentHover transition-colors opacity-0 group-hover:opacity-100"
-                                >
-                                    OPEN DASHBOARD
-                                </button>
-                                <div className="text-gray-500 bg-[#222] p-2 rounded-full">
-                                    {expandedDoc?.id === doc.id ? <ChevronDown /> : <ChevronRight />}
-                                </div>
+                            
+                            <div className="flex items-center gap-4 self-end md:self-center">
+                                {doc.metrics ? (
+                                    <>
+                                        <button
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                handleLoadToDashboard(doc);
+                                            }}
+                                            className="text-[#111111] bg-racing-accent px-4 py-2 rounded-full font-display tracking-widest uppercase hover:bg-racing-accentHover transition-colors opacity-0 group-hover:opacity-100 shadow-md shadow-racing-accent/20"
+                                        >
+                                            OPEN DASHBOARD
+                                        </button>
+                                        <div className="text-racing-accent bg-[#222] p-2 rounded-full hidden md:block">
+                                            {expandedDoc?.id === doc.id ? <ChevronDown /> : <ChevronRight />}
+                                        </div>
+                                    </>
+                                ) : (
+                                    <button
+                                        onClick={(e) => handleAnalyzeFromList(e, doc)}
+                                        disabled={processingListId === doc.id}
+                                        className="text-[#111111] bg-[#bef264] px-6 py-2.5 rounded-full font-display tracking-widest uppercase hover:bg-[#a3d83b] transition-all flex items-center gap-2 shadow-lg shadow-[#bef264]/20 border border-[#a3d83b]"
+                                    >
+                                        {processingListId === doc.id ? <Loader2 className="animate-spin" size={16} /> : null}
+                                        {processingListId === doc.id ? "ANALYZING..." : "ANALYZE NOW"}
+                                    </button>
+                                )}
                             </div>
                         </div>
 
                         {/* Expanded Details */}
-                        {expandedDoc?.id === doc.id && (
-                            <div className="border-t border-slate-800 p-6 bg-slate-950/30">
+                        {expandedDoc?.id === doc.id && doc.metrics && (
+                            <div className="border-t border-[#333] p-6 bg-[#111111]/80">
                                 {/* Summary */}
                                 {doc.overall_summary && (
-                                    <div className="mb-6 bg-blue-500/5 p-4 rounded-xl border border-blue-500/10">
-                                        <h4 className="text-xs font-bold text-blue-400 uppercase mb-2">AI Summary</h4>
-                                        <p className="text-sm text-slate-300 leading-relaxed">{doc.overall_summary}</p>
+                                    <div className="mb-6 bg-racing-accent/5 p-4 rounded-xl border border-racing-accent/20">
+                                        <h4 className="text-xs font-bold text-racing-accent uppercase mb-2 tracking-widest">AI Summary</h4>
+                                        <p className="text-sm text-slate-300 leading-relaxed font-medium">{doc.overall_summary}</p>
                                     </div>
                                 )}
 
                                 {/* Metrics Grid */}
                                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                                     {doc.metrics?.map((m, i) => (
-                                        <div key={i} className="p-3 rounded-lg bg-slate-900 border border-slate-800 flex justify-between items-center">
+                                        <div key={i} className="p-4 rounded-xl bg-racing-card border border-[#2a2a2a] flex justify-between items-center transition-all hover:border-[#444]">
                                             <div>
-                                                <div className="text-xs text-slate-400">{m.name}</div>
-                                                <div className="text-sm font-bold text-white">{m.value} <span className="text-[10px] text-slate-500">{m.unit}</span></div>
+                                                <div className="text-xs text-gray-500 font-bold uppercase tracking-wider mb-1">{m.name}</div>
+                                                <div className="text-lg font-bold text-white tracking-wide">{m.value} <span className="text-[10px] text-gray-500 uppercase">{m.unit}</span></div>
                                             </div>
-                                            <span className={"text-[10px] px-2 py-1 rounded border " + (m.status === 'Normal' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 'bg-red-500/10 text-red-400 border-red-500/20')}>
+                                            <span className={`text-[10px] px-3 py-1.5 rounded-md border font-bold uppercase tracking-widest ${m.status === 'Normal' ? 'bg-[#1a2f22] text-[#4ade80] border-[#22c55e]/50' : 'bg-red-500/10 text-red-500 border-red-500/30'}`}>
                                                 {m.status}
                                             </span>
                                         </div>

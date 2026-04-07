@@ -9,31 +9,43 @@ export default function Layout() {
     const isActive = (path) => location.pathname === path;
 
     // Calculate Health Score
-    const [score, setScore] = useState(100);
+    const [score, setScore] = useState(0);
 
     useEffect(() => {
         if (!user?.email) return;
 
-        const saved = localStorage.getItem(`dashboard_analysis_${user.email} `);
-        if (saved) {
-            try {
-                const data = JSON.parse(saved);
-                if (data.metrics) {
-                    let calculated = 100;
-                    const deduction = 10;
+        const calculateScore = () => {
+            const saved = localStorage.getItem(`dashboard_analysis_${user.email}`);
+            if (saved) {
+                try {
+                    const data = JSON.parse(saved);
+                    if (data.metrics) {
+                        let calculated = 100;
+                        const deduction = 10;
 
-                    data.metrics.forEach(m => {
-                        if (m.status !== 'Normal') {
-                            calculated -= deduction;
-                        }
-                    });
+                        data.metrics.forEach(m => {
+                            if (m.status !== 'Normal') {
+                                calculated -= deduction;
+                            }
+                        });
 
-                    setScore(Math.max(0, calculated)); // floor at 0
+                        setScore(Math.max(0, calculated)); // floor at 0
+                    }
+                } catch (e) {
+                    console.error("Score calc error", e);
                 }
-            } catch (e) {
-                console.error("Score calc error", e);
+            } else {
+                setScore(0);
             }
-        }
+        };
+
+        // Initial load
+        calculateScore();
+
+        // Listen for live updates when an analysis finishes
+        window.addEventListener('analysisUpdated', calculateScore);
+        
+        return () => window.removeEventListener('analysisUpdated', calculateScore);
     }, [user, location.pathname]);
 
     return (

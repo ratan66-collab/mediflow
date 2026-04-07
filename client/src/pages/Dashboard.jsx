@@ -15,6 +15,14 @@ export default function Dashboard() {
     const [result, setResult] = useState(null);
     const [error, setError] = useState(null);
 
+    // Ensure the sidebar resets to 0% whenever the dashboard is visibly empty
+    useEffect(() => {
+        if (!result && user?.email) {
+            localStorage.removeItem(`dashboard_analysis_${user.email}`);
+            window.dispatchEvent(new Event('analysisUpdated'));
+        }
+    }, [result, user?.email]);
+
     const handleFileChange = (e) => {
         const selected = e.target.files[0];
         if (selected) {
@@ -44,6 +52,30 @@ export default function Dashboard() {
 
             const data = await response.json();
             setResult(data);
+            
+            // Save to localStorage for Layout.jsx Health Rating
+            if (user?.email) {
+                localStorage.setItem(`dashboard_analysis_${user.email}`, JSON.stringify(data));
+                window.dispatchEvent(new Event('analysisUpdated'));
+                
+                // Append directly to Document Archives explicitly!
+                const docKey = `user_documents_${user.email}`;
+                let history = [];
+                try {
+                    const authSaved = localStorage.getItem(docKey);
+                    if (authSaved) history = JSON.parse(authSaved);
+                } catch(e) {}
+                
+                const newDocArchived = {
+                    id: Date.now(),
+                    name: "Dashboard Upload (" + file.name + ")",
+                    date: new Date().toLocaleDateString(),
+                    ...data
+                };
+                
+                history.unshift(newDocArchived);
+                localStorage.setItem(docKey, JSON.stringify(history));
+            }
         } catch (err) {
             setError(err.message);
         } finally {
