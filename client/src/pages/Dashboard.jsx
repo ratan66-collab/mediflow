@@ -192,8 +192,8 @@ export default function Dashboard() {
                                 <RangeBar
                                     value={typeof metric.value === 'number' ? metric.value : parseFloat(metric.value) || 0}
                                     unit={metric.unit}
-                                    status={metric.status}
-                                    max={metric.name.includes('Sugar') ? 200 : metric.name.includes('Pressure') ? 180 : 20}
+                                    status={metric?.status || 'Normal'}
+                                    max={(metric?.name || '').includes('Sugar') ? 200 : (metric?.name || '').includes('Pressure') ? 180 : 20}
                                 />
                             </div>
                         );
