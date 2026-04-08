@@ -10,14 +10,19 @@ export const AuthProvider = ({ children }) => {
     const [loading, setLoading] = useState(true);
 
     const fallbackAuth = (email, name = null) => {
+        const targetEmail = email || 'user@example.com';
         const fakeUser = {
             id: 'user-' + Date.now(),
-            email: email || 'user@example.com',
+            email: targetEmail,
             user_metadata: name ? { name } : {},
             aud: 'authenticated',
             role: 'authenticated'
         };
         localStorage.setItem('demo_user', JSON.stringify(fakeUser));
+        
+        // Wipe Dashboard Memory on Fresh Explicit Login Action
+        localStorage.removeItem('dashboard_analysis_' + targetEmail);
+        
         setUser(fakeUser);
         return { error: null };
     };
@@ -76,6 +81,7 @@ export const AuthProvider = ({ children }) => {
             const { data, error } = await supabase.auth.signInWithPassword({ email, password });
             // If Supabase rejects the login for ANY reason (invalid password, not registered), safely bypass it automatically for demo access!
             if (error) return fallbackAuth(email);
+            localStorage.removeItem('dashboard_analysis_' + email);
             return { data, error };
         } catch (e) {
             return fallbackAuth(email);
@@ -92,6 +98,7 @@ export const AuthProvider = ({ children }) => {
                 options: { data: { name } }
             });
             if (error) return fallbackAuth(email, name);
+            localStorage.removeItem('dashboard_analysis_' + email);
             return { data, error };
         } catch (e) {
             return fallbackAuth(email, name);
