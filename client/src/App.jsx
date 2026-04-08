@@ -10,6 +10,18 @@ const ProtectedRoute = ({ children }) => {
   const { user, loading } = useAuth();
   const location = useLocation();
 
+  // Wipe dashboard cache universally EXACTLY once per raw physical browser tab session block
+  if (!sessionStorage.getItem('mediflow_booted')) {
+      sessionStorage.setItem('mediflow_booted', 'true');
+      try {
+          Object.keys(localStorage).forEach(key => {
+              if (key.startsWith('dashboard_analysis_')) {
+                  localStorage.removeItem(key);
+              }
+          });
+      } catch(e) {}
+  }
+
   if (loading) return <div className="h-screen bg-slate-950 flex items-center justify-center text-blue-500">Loading...</div>;
 
   if (!user) {

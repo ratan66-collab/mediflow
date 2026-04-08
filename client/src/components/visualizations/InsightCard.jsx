@@ -39,15 +39,13 @@ const InsightCard = ({ metric }) => {
                     </div>
                 </div>
 
-                {/* Only show expand icon if there are insights */}
-                {!isNormal && (
-                    <div className="text-gray-500 pr-2">
-                        {expanded ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
-                    </div>
-                )}
+                {/* Show expand icon to indicate interactability natively */}
+                <div className="text-gray-500 pr-2">
+                    {expanded ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+                </div>
             </div>
 
-            {/* Expandable Content (Only for abnormal results) */}
+            {/* Expandable Content uniformly allowed */}
             <div className={`overflow-hidden transition-all duration-300 ${expanded ? 'max-h-[1000px] opacity-100' : 'max-h-0 opacity-0'}`}>
                 <div className="p-4 pt-0 border-t border-[#2a2a2a] space-y-4">
 
