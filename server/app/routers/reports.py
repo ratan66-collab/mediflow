@@ -4,7 +4,7 @@ from app.services.llm_service import analyze_medical_report
 router = APIRouter()
 
 @router.post("/analyze")
-async def analyze_report(file: UploadFile = File(...)):
+def analyze_report(file: UploadFile = File(...)):
     # Basic validation
     allowed_types = ["application/pdf", "image/jpeg", "image/png", "image/webp"]
     if file.content_type not in allowed_types:
@@ -12,7 +12,8 @@ async def analyze_report(file: UploadFile = File(...)):
         if not file.filename.lower().endswith(('.pdf', '.jpg', '.jpeg', '.png', '.webp')):
              raise HTTPException(status_code=400, detail="Invalid file type. Allowed: PDF, JPEG, PNG, WEBP")
     
-    contents = await file.read()
+    # Read synchronously to allow FastAPI to push to background worker threadpool
+    contents = file.file.read()
     
     # Analyze
     result = analyze_medical_report(contents, file.content_type)

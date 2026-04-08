@@ -43,7 +43,7 @@ class PhysioService:
             }
             """
 
-    async def get_consultation(self, user_input: str):
+    def get_consultation(self, user_input: str):
         if not self.client:
             return {"error": "Server configuration error: Missing API Key"}
         print("Generating Physio Plan with llama-3.3-70b (Groq)...")
