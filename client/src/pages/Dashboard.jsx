@@ -173,7 +173,7 @@ export default function Dashboard() {
             {result?.metrics?.length > 0 && (
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                     {(['Blood Pressure', 'Hemoglobin', 'Blood Sugar']).map((key, i) => {
-                        const metric = result.metrics.find(m => m.name.toLowerCase().includes(key.toLowerCase()))
+                        const metric = result.metrics.find(m => (m?.name || '').toLowerCase().includes(key.toLowerCase()))
                             || result.metrics[i];
 
                         if (!metric) return null;
@@ -183,10 +183,10 @@ export default function Dashboard() {
                                 <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-racing-dark via-racing-accent to-racing-dark opacity-0 group-hover:opacity-100 transition-opacity" />
 
                                 <div className="flex justify-between items-start mb-6">
-                                    <h3 className="text-racing-text font-display text-2xl tracking-wide uppercase">{metric.name}</h3>
-                                    <span className={`text-xs px-3 py-1 font-bold tracking-wider rounded-md border ${metric.status === 'Normal' ? 'bg-[#1a2f22] text-[#4ade80] border-[#22c55e]' :
+                                    <h3 className="text-racing-text font-display text-2xl tracking-wide uppercase">{metric?.name || 'UNKNOWN'}</h3>
+                                    <span className={`text-xs px-3 py-1 font-bold tracking-wider rounded-md border ${(metric?.status || 'Normal') === 'Normal' ? 'bg-[#1a2f22] text-[#4ade80] border-[#22c55e]' :
                                         'bg-red-500/10 text-red-400 border-red-500/30'
-                                        }`}>{metric.status.toUpperCase()}</span>
+                                        }`}>{(metric?.status || 'Normal').toUpperCase()}</span>
                                 </div>
 
                                 <RangeBar
