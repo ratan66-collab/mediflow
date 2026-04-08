@@ -1,8 +1,13 @@
 import React from 'react';
 
 const RangeBar = ({ value, min = 0, max = 200, unit, status }) => {
-    // Normalize value to percentage
-    const percentage = Math.min(Math.max(((value - min) / (max - min)) * 100, 0), 100);
+    // Base the visual position strictly on the AI's clinical status grade since bounds are unknown
+    let percentage = 50; // Default center of Normal (30% - 70% zone)
+    if (status === 'Low') {
+        percentage = 15; // Center of Low (0% - 30% zone)
+    } else if (status === 'High' || status === 'Critical') {
+        percentage = 85; // Center of High (70% - 100% zone)
+    }
 
     // Determine color based on status
     const getColor = () => {
