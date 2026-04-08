@@ -54,13 +54,6 @@ const InsightCard = ({ metric }) => {
                 }}
             >
                 <div className="p-4 pt-0 border-t border-[#2a2a2a] space-y-4">
-                    
-                    {/* Fallback for empty AI insights on Normal metrics */}
-                    {causes.length === 0 && actions.length === 0 && diet.length === 0 && (
-                        <div className="text-sm text-gray-500 py-6 text-center font-display uppercase tracking-widest bg-[#1a1a1a] rounded-xl mt-4 border border-[#2a2a2a]">
-                            No immediate clinical interventions required for this metric.
-                        </div>
-                    )}
 
                     {/* Causes */}
                     {causes.length > 0 && (

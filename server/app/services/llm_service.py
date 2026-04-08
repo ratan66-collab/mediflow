@@ -49,7 +49,8 @@ def analyze_medical_report(file_bytes: bytes, mime_type: str):
     }
     
     IMPORTANT: 
-    - You MUST fully populate the 'insights' object for EVEY SINGLE METRIC regardless of whether it is High, Low, Critical, or Normal. For normal metrics, explain what it is and how to maintain it.
+    - You MUST fully populate ALL arrays inside the 'insights' object ('possible_causes', 'recommended_actions', 'dietary_suggestions') FOR EVERY SINGLE METRIC regardless of whether it is High, Low, Critical, or Normal. 
+    - If a metric is Normal, you MUST invent logical "possible_causes" for its normalcy (e.g. "Adequate nutrient intake, healthy organ function") and "recommended_actions" (e.g. "Continue current lifestyle, annual routine checkups") so the arrays are NEVER remotely empty! DO NOT leave ANY arrays empty!
     - "affected_organs" should map the metric to the relevant body part (e.g. Creatinine -> Kidneys, AST/ALT -> Liver, Troponin -> Heart).
     """
 
