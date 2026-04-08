@@ -70,13 +70,13 @@ export default function Layout() {
                 <div className="p-6 border-t border-[#222]">
                     <div className="p-5 rounded-2xl bg-racing-card border-2 border-[#2a2a2a] relative overflow-hidden">
                         <h3 className="text-racing-textMuted font-display tracking-widest text-lg uppercase mb-2">Health Rating</h3>
-                        <div className={`font - display text - 5xl tracking - widest ${score < 70 ? 'text-[#ff4b22]' : 'text-[#4ade80]'} `}>
+                        <div className={`font-display text-5xl tracking-widest ${score < 70 ? 'text-[#ff4b22]' : 'text-[#4ade80]'}`}>
                             {score}<span className="text-2xl text-gray-500">%</span>
                         </div>
                         <div className="w-full bg-[#111] h-3 mt-4 rounded-full overflow-hidden border border-[#333]">
                             <div
-                                className={`h - full transition - all duration - 1000 ${score < 70 ? 'bg-[#ff4b22]' : 'bg-[#4ade80]'} `}
-                                style={{ width: `${score}% ` }}
+                                className={`h-full transition-all duration-1000 ${score < 70 ? 'bg-[#ff4b22]' : 'bg-[#4ade80]'}`}
+                                style={{ width: `${score}%` }}
                             />
                         </div>
                         <p className="text-xs text-racing-textMuted mt-3 font-medium">Based on recent analysis.</p>
