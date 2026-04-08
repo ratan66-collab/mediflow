@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Upload, FileText, AlertCircle, CheckCircle, Loader2, Calendar, ChevronRight, ChevronDown } from 'lucide-react';
+import { Upload, FileText, AlertCircle, CheckCircle, Loader2, Calendar, ChevronRight, ChevronDown, Trash2 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
 import { endpoints } from '../config';
@@ -241,6 +241,26 @@ export default function ReportUpload() {
         navigate('/');
     };
 
+    const handleDeleteDocument = async (e, docId) => {
+        e.stopPropagation();
+        
+        // Remove from UI state
+        const updatedDocs = documents.filter(d => d.id !== docId);
+        setDocuments(updatedDocs);
+        
+        // Remove from local memory
+        if (user?.email) {
+            localStorage.setItem("user_documents_" + user.email, JSON.stringify(updatedDocs));
+        }
+
+        // Try deleting from Supabase
+        if (user && supabase) {
+            try {
+                await supabase.from('reports').delete().eq('id', docId);
+            } catch(err) {} 
+        }
+    };
+
     return (
         <div className="max-w-5xl mx-auto space-y-8">
             <div className="flex justify-between items-center">
@@ -360,6 +380,14 @@ export default function ReportUpload() {
                             </div>
                             
                             <div className="flex items-center gap-4 self-end md:self-center">
+                                <button
+                                    onClick={(e) => handleDeleteDocument(e, doc.id)}
+                                    className="p-2.5 text-[#555] hover:text-red-500 hover:bg-red-500/10 border border-transparent hover:border-red-500/20 rounded-full transition-all"
+                                    title="Delete Document"
+                                >
+                                    <Trash2 size={20} />
+                                </button>
+                                
                                 {doc.metrics ? (
                                     <>
                                         <button
