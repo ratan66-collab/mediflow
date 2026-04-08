@@ -45,8 +45,14 @@ const InsightCard = ({ metric }) => {
                 </div>
             </div>
 
-            {/* Expandable Content uniformly allowed */}
-            <div className={`overflow-hidden transition-all duration-300 ${expanded ? 'max-h-[1000px] opacity-100' : 'max-h-0 opacity-0'}`}>
+            {/* Expandable Content uniformly allowed - Using inline styles to bypass Tailwind JIT purge errors */}
+            <div 
+                className="overflow-hidden transition-all duration-500 ease-in-out" 
+                style={{ 
+                    maxHeight: expanded ? '2000px' : '0px',
+                    opacity: expanded ? 1 : 0
+                }}
+            >
                 <div className="p-4 pt-0 border-t border-[#2a2a2a] space-y-4">
                     
                     {/* Fallback for empty AI insights on Normal metrics */}
