@@ -28,6 +28,8 @@ def analyze_medical_report(file_bytes: bytes, mime_type: str):
       "patient_name": "string or null",
       "report_date": "YYYY-MM-DD or null",
       "test_type": "string (e.g. Blood Test, MRI, X-Ray)",
+      "overall_summary": "string (2-3 sentences completely summarizing the report)",
+      "critical_findings": ["string", "string"],
       "metrics": [
         {
           "name": "string (e.g. Hemoglobin)",
@@ -40,17 +42,14 @@ def analyze_medical_report(file_bytes: bytes, mime_type: str):
               "possible_causes": ["string", "string"],
               "recommended_actions": ["string", "string"],
               "dietary_suggestions": ["string", "string"],
-              "affected_organs": ["string"] (e.g. ["Liver"], ["Heart"], ["Kidneys"])
+              "affected_organs": ["string"] (e.g. ["Liver"], ["Heart"])
           }
         }
-      ],
-      "overall_summary": "string (2-3 sentences explaining the health status)",
-      "critical_findings": ["string", "string"]
+      ]
     }
     
     IMPORTANT: 
-    - For every "High", "Low", or "Critical" result, you MUST fill the "insights" object with specific medical knowledge.
-    - If status is "Normal", insights can be minimal or null.
+    - You MUST fully populate the 'insights' object for EVEY SINGLE METRIC regardless of whether it is High, Low, Critical, or Normal. For normal metrics, explain what it is and how to maintain it.
     - "affected_organs" should map the metric to the relevant body part (e.g. Creatinine -> Kidneys, AST/ALT -> Liver, Troponin -> Heart).
     """
 
@@ -87,7 +86,8 @@ def analyze_medical_report(file_bytes: bytes, mime_type: str):
             ],
             temperature=0.1,
             top_p=0.7,
-            max_tokens=1400,
+            max_tokens=4000,
+            response_format={ "type": "json_object" },
             stream=False
         )
         
