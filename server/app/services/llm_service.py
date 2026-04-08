@@ -82,12 +82,12 @@ def analyze_medical_report(file_bytes: bytes, mime_type: str):
                 },
                 {
                     "role": "user",
-                    "content": f"Extract the requested JSON data from the following raw OCR text extracted from a medical report:\n\n{extracted_text[:14000]}"
+                    "content": f"Extract the requested JSON data from the following raw OCR text extracted from a medical report:\n\n{extracted_text[:8000]}"
                 }
             ],
             temperature=0.1,
             top_p=0.7,
-            max_tokens=4000,
+            max_tokens=2000,
             response_format={ "type": "json_object" },
             stream=False
         )
