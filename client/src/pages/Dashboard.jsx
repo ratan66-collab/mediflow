@@ -15,11 +15,21 @@ export default function Dashboard() {
     const [result, setResult] = useState(null);
     const [error, setError] = useState(null);
 
-    // Ensure the sidebar resets to 0% whenever the dashboard is visibly empty
+    // Ensure the sidebar updates and catches cross-page routing document handoffs
     useEffect(() => {
-        if (!result && user?.email) {
-            localStorage.removeItem(`dashboard_analysis_${user.email}`);
-            window.dispatchEvent(new Event('analysisUpdated'));
+        if (user?.email) {
+            if (!result) {
+                const saved = localStorage.getItem(`dashboard_analysis_${user.email}`);
+                if (saved) {
+                    setResult(JSON.parse(saved));
+                    setTimeout(() => window.dispatchEvent(new Event('analysisUpdated')), 100);
+                } else {
+                    window.dispatchEvent(new Event('analysisUpdated'));
+                }
+            } else {
+                localStorage.setItem(`dashboard_analysis_${user.email}`, JSON.stringify(result));
+                window.dispatchEvent(new Event('analysisUpdated'));
+            }
         }
     }, [result, user?.email]);
 
