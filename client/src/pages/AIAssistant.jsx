@@ -1,12 +1,13 @@
 import { useState, useRef, useEffect } from 'react';
-import { Send, Bot, User, Sparkles, Trash2 } from 'lucide-react';
+import { Send, Bot, User, Sparkles, Trash2, Calendar, ClipboardCheck, ChevronRight } from 'lucide-react';
+import { endpoints } from '../config';
 
 export default function AIAssistant() {
   const [messages, setMessages] = useState([
     {
       id: 1,
       type: 'bot',
-      content: "Hello! I'm Rasputin, your AI health assistant. I can help you understand lab results, answer health questions, and provide general wellness guidance. How can I help you today?",
+      content: "Hello! I'm Physio-AI, your digital physiotherapist. Tell me about your pain or injury, and I will create a tailored 7-day recovery plan for you.",
       timestamp: new Date()
     }
   ]);
@@ -15,10 +16,10 @@ export default function AIAssistant() {
   const messagesEndRef = useRef(null);
 
   const suggestedQuestions = [
-    "What does high cholesterol mean?",
-    "How can I lower my blood pressure?",
-    "Explain my glucose levels",
-    "What foods improve heart health?"
+    "I have lower back pain",
+    "Shoulder stiffness from sitting",
+    "Knee pain after running",
+    "Wrist pain from typing"
   ];
 
   const scrollToBottom = () => {
@@ -27,36 +28,14 @@ export default function AIAssistant() {
 
   useEffect(() => {
     scrollToBottom();
-  }, [messages]);
+  }, [messages, isTyping]);
 
-  const generateBotResponse = (userMessage) => {
-    const message = userMessage.toLowerCase();
-    
-    if (message.includes('cholesterol')) {
-      return "High cholesterol means you have too much LDL (bad) cholesterol in your blood, which can increase your risk of heart disease and stroke. Consider eating more fiber, reducing saturated fats, and exercising regularly. Consult your doctor for personalized advice.";
-    } else if (message.includes('blood pressure')) {
-      return "To lower blood pressure naturally: reduce sodium intake, exercise regularly (30 mins daily), maintain healthy weight, limit alcohol, manage stress through meditation or yoga, and eat potassium-rich foods like bananas and leafy greens. Monitor your BP regularly and follow your doctor's treatment plan.";
-    } else if (message.includes('glucose') || message.includes('blood sugar')) {
-      return "Normal fasting glucose is 70-100 mg/dL. Higher levels may indicate prediabetes or diabetes. Manage glucose levels through: balanced diet low in refined carbs, regular exercise, stress management, adequate sleep, and maintaining healthy weight. Regular monitoring is essential.";
-    } else if (message.includes('heart health') || message.includes('heart')) {
-      return "Heart-healthy foods include: fatty fish (salmon, mackerel), nuts, seeds, olive oil, berries, leafy greens, whole grains, and beans. Limit processed foods, excess sugar, and saturated fats. Combine with regular aerobic exercise for optimal heart health.";
-    } else if (message.includes('exercise') || message.includes('fitness')) {
-      return "The CDC recommends 150 minutes of moderate exercise weekly (like brisk walking) or 75 minutes of vigorous exercise. Include strength training twice weekly. Start slow and gradually increase intensity. Always consult your doctor before starting a new exercise program.";
-    } else if (message.includes('sleep')) {
-      return "Adults need 7-9 hours of quality sleep nightly. Improve sleep by: maintaining consistent schedule, creating dark/cool environment, avoiding screens before bed, limiting caffeine after 2pm, and establishing relaxing bedtime routine. Poor sleep affects immunity, weight, and mental health.";
-    } else if (message.includes('stress')) {
-      return "Manage stress through: deep breathing exercises, meditation, regular physical activity, adequate sleep, limiting caffeine/alcohol, connecting with friends/family, and seeking professional help if needed. Chronic stress can impact physical and mental health.";
-    } else {
-      return "I'm here to help with health-related questions. I can provide information about nutrition, exercise, sleep, stress management, preventive care, medications, lab results, and symptoms. For specific medical advice, please consult your healthcare provider. What specific health topic would you like to know more about?";
-    }
-  };
-
-  const handleSendMessage = (messageText = null) => {
+  const handleSendMessage = async (messageText = null) => {
     const text = messageText || inputMessage.trim();
     if (!text) return;
 
     const userMessage = {
-      id: messages.length + 1,
+      id: Date.now(),
       type: 'user',
       content: text,
       timestamp: new Date()
@@ -66,16 +45,39 @@ export default function AIAssistant() {
     setInputMessage('');
     setIsTyping(true);
 
-    setTimeout(() => {
-      const botResponse = {
-        id: messages.length + 2,
+    try {
+      const response = await fetch(endpoints.consult, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: text }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        
+        const botMessage = {
+          id: Date.now() + 1,
+          type: 'bot',
+          plan: data.weekly_plan,
+          diagnosis: data.diagnosis_note,
+          tips: data.recovery_tips,
+          timestamp: new Date()
+        };
+        setMessages(prev => [...prev, botMessage]);
+      } else {
+        throw new Error('Failed to get consultation');
+      }
+    } catch (err) {
+      console.error(err);
+      setMessages(prev => [...prev, {
+        id: Date.now() + 1,
         type: 'bot',
-        content: generateBotResponse(text),
+        content: "I'm having trouble connecting to my knowledge base. Please try again later.",
         timestamp: new Date()
-      };
-      setMessages(prev => [...prev, botResponse]);
+      }]);
+    } finally {
       setIsTyping(false);
-    }, 1000 + Math.random() * 1000);
+    }
   };
 
   const handleKeyPress = (e) => {
@@ -89,7 +91,7 @@ export default function AIAssistant() {
     setMessages([{
       id: 1,
       type: 'bot',
-      content: "Hello! I'm Rasputin, your AI health assistant. I can help you understand lab results, answer health questions, and provide general wellness guidance. How can I help you today?",
+      content: "Hello! I'm Physio-AI, your digital physiotherapist. Tell me about your pain or injury, and I will create a tailored 7-day recovery plan for you.",
       timestamp: new Date()
     }]);
   };
@@ -105,10 +107,10 @@ export default function AIAssistant() {
               <Bot size={28} />
             </div>
             <div>
-              <h1 className="text-xl font-bold tracking-widest uppercase text-white m-0 leading-tight">RASPUTIN</h1>
+              <h1 className="text-xl font-bold tracking-widest uppercase text-white m-0 leading-tight">PHYSIO-AI</h1>
               <div className="flex items-center gap-2 mt-1.5">
                 <div className="w-2 h-2 bg-[#ccff00] rounded-full animate-pulse"></div>
-                <span className="text-[10px] text-gray-400 hover:text-gray-300 transition-colors uppercase tracking-widest font-semibold cursor-default">Online</span>
+                <span className="text-[10px] text-gray-400 hover:text-gray-300 transition-colors uppercase tracking-widest font-semibold cursor-default">Specialist Online</span>
               </div>
             </div>
           </div>
@@ -118,35 +120,85 @@ export default function AIAssistant() {
         </div>
 
         {/* Chat Container */}
-        <div className="flex-1 overflow-y-auto space-y-6 py-6 scrollbar-none pb-20">
+        <div className="flex-1 overflow-y-auto space-y-8 py-6 scrollbar-none pb-20 px-2">
           {messages.map((message) => (
-            <div key={message.id} className={`flex items-start flex-col gap-2 ${message.type === 'user' ? 'items-end' : 'items-start'}`}>
-              
-              <div className="flex items-start gap-4 max-w-[85%]">
+            <div key={message.id} className={`flex flex-col gap-2 ${message.type === 'user' ? 'items-end' : 'items-start'}`}>
+              <div className={`flex items-start gap-4 ${message.type === 'user' ? 'max-w-[70%] flex-row-reverse' : 'max-w-[95%]'}`}>
                 {message.type === 'bot' && (
-                  <div className="w-8 h-8 bg-[#ccff00] rounded-lg mt-1 flex items-center justify-center flex-shrink-0 text-[#111]">
-                    <Bot size={18} />
+                  <div className="w-10 h-10 bg-[#ccff00] rounded-xl mt-1 flex items-center justify-center flex-shrink-0 text-[#111] shadow-lg shadow-[#ccff00]/10">
+                    <Bot size={22} />
                   </div>
                 )}
                 
                 <div className={`flex flex-col gap-1.5 ${message.type === 'user' ? 'items-end' : 'items-start'}`}>
-                  {message.type === 'bot' ? (
-                    <span className="text-[10px] text-[#ccff00] font-bold uppercase tracking-widest ml-1">Rasputin</span>
+                  <span className={`text-[10px] font-bold uppercase tracking-widest ${message.type === 'bot' ? 'text-[#ccff00] ml-1' : 'text-gray-500 mr-1'}`}>
+                    {message.type === 'bot' ? 'Physio-AI' : 'You'}
+                  </span>
+                  
+                  {message.plan ? (
+                    <div className="space-y-4">
+                      {/* Diagnosis Note */}
+                      <div className="bg-[#1a1a1a] border border-[#ccff00]/20 rounded-xl p-5 text-gray-300 text-[15px] leading-relaxed tracking-wide border-l-4 border-l-[#ccff00]">
+                         <p className="font-semibold text-[#ccff00] mb-2 uppercase text-[11px] tracking-widest">Initial Assessment</p>
+                         {message.diagnosis}
+                      </div>
+
+                      {/* 7-Day Plan Grid */}
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        {message.plan.map((day, dIdx) => (
+                          <div key={dIdx} className="bg-[#111] border border-[#2a2a2a] rounded-xl overflow-hidden hover:border-[#ccff00]/30 transition-all group">
+                             <div className="bg-[#1a1a1a] px-4 py-3 flex items-center justify-between border-b border-[#2a2a2a]">
+                                <span className="text-[#ccff00] font-bold text-xs uppercase tracking-widest">{day.day}</span>
+                                <span className="text-gray-500 text-[10px] uppercase font-bold">{day.focus}</span>
+                             </div>
+                             <div className="p-4 space-y-3">
+                                {day.exercises.map((ex, eIdx) => (
+                                  <div key={eIdx} className="flex items-start gap-3">
+                                     <div className="w-5 h-5 bg-[#ccff00]/10 rounded flex items-center justify-center mt-0.5 shrink-0">
+                                        <ChevronRight size={12} className="text-[#ccff00]" />
+                                     </div>
+                                     <div>
+                                        <p className="text-xs text-white font-bold tracking-wide">{ex.name}</p>
+                                        <p className="text-[10px] text-gray-500 mt-0.5 uppercase tracking-wider">
+                                          {ex.sets} Sets × {ex.reps} Reps • {ex.duration_minutes}m
+                                        </p>
+                                     </div>
+                                  </div>
+                                ))}
+                             </div>
+                          </div>
+                        ))}
+                      </div>
+
+                      {/* Recovery Tips */}
+                      <div className="bg-[#1a1a1a] border border-[#2a2a2a] p-5 rounded-xl">
+                        <div className="flex items-center gap-2 mb-3">
+                          <ClipboardCheck size={16} className="text-[#ccff00]" />
+                          <h4 className="text-white font-bold text-xs uppercase tracking-widest">Recovery Tips</h4>
+                        </div>
+                        <ul className="space-y-2">
+                           {message.tips.map((tip, tIdx) => (
+                             <li key={tIdx} className="text-xs text-gray-400 flex gap-2">
+                               <span className="text-[#ccff00]">•</span> {tip}
+                             </li>
+                           ))}
+                        </ul>
+                      </div>
+                    </div>
                   ) : (
-                    <span className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mr-1">You</span>
+                    <div className={`rounded-xl p-5 text-[15px] font-medium leading-relaxed tracking-wide shadow-xl ${
+                      message.type === 'user'
+                        ? 'bg-[#222222] text-white rounded-tr-sm border border-[#333]'
+                        : 'bg-[#1a1a1a] text-gray-300 rounded-tl-sm border border-[#2a2a2a]'
+                    }`}>
+                      <p className="whitespace-pre-wrap">{message.content}</p>
+                    </div>
                   )}
-                  <div className={`rounded-xl p-5 text-[15px] font-medium leading-relaxed tracking-wide ${
-                    message.type === 'user'
-                      ? 'bg-[#222222] text-white rounded-tr-sm border border-[#333]'
-                      : 'bg-[#1a1a1a] text-gray-300 rounded-tl-sm border border-[#2a2a2a]'
-                  }`}>
-                    <p className="whitespace-pre-wrap">{message.content}</p>
-                  </div>
                 </div>
 
                 {message.type === 'user' && (
-                  <div className="w-8 h-8 bg-[#222] border border-[#333] rounded-lg mt-1 flex items-center justify-center flex-shrink-0 text-gray-400">
-                    <User size={18} />
+                  <div className="w-10 h-10 bg-[#222] border border-[#333] rounded-xl mt-1 flex items-center justify-center flex-shrink-0 text-gray-400 shadow-md">
+                    <User size={22} />
                   </div>
                 )}
               </div>
@@ -155,8 +207,8 @@ export default function AIAssistant() {
 
           {isTyping && (
              <div className="flex items-start gap-4">
-               <div className="w-8 h-8 bg-[#ccff00] rounded-lg mt-1 flex items-center justify-center text-[#111]">
-                 <Bot size={18} />
+               <div className="w-10 h-10 bg-[#ccff00] rounded-xl flex items-center justify-center text-[#111]">
+                 <Bot size={22} />
                </div>
                <div className="bg-[#1a1a1a] border border-[#2a2a2a] p-5 rounded-xl rounded-tl-sm flex items-center gap-2 h-14">
                  <div className="w-2 h-2 bg-gray-500 rounded-full animate-bounce"></div>
@@ -166,14 +218,14 @@ export default function AIAssistant() {
              </div>
           )}
 
-          {/* Suggested Prompts - Only show right after the initial bot message */}
+          {/* Suggested Prompts */}
           {messages.length === 1 && (
-            <div className="flex flex-wrap gap-3 pl-[3.25rem] pt-2">
+            <div className="flex flex-wrap gap-3 pl-[3.5rem] pt-2">
               {suggestedQuestions.map((q, i) => (
                 <button
                   key={i}
                   onClick={() => handleSendMessage(q)}
-                  className="flex items-center gap-2 px-4 py-2.5 bg-[#1a1a1a] hover:bg-[#222222] border border-[#2a2a2a] hover:border-[#ccff00]/40 rounded-full text-xs font-bold tracking-wider uppercase text-gray-400 hover:text-[#ccff00] transition-all shadow-sm"
+                  className="flex items-center gap-2 px-6 py-3 bg-[#1a1a1a] hover:bg-[#222222] border border-[#2a2a2a] hover:border-[#ccff00]/40 rounded-full text-[11px] font-black tracking-widest uppercase text-gray-400 hover:text-[#ccff00] transition-all shadow-sm active:scale-95"
                 >
                   <Sparkles size={14} className="text-[#ccff00]" />
                   {q}
@@ -186,32 +238,32 @@ export default function AIAssistant() {
 
         {/* Input Area */}
         <div className="pt-4 border-t border-[#222] mt-auto pb-4">
-          <div className="relative flex items-center bg-[#1a1a1a] border border-[#333] hover:border-[#444] rounded-2xl p-2 transition-all focus-within:border-[#ccff00]/50 shadow-lg">
+          <div className="relative flex items-center bg-[#1a1a1a] border border-[#333] hover:border-[#444] rounded-2xl p-2 transition-all focus-within:border-[#ccff00]/50 shadow-2xl">
             <textarea
               value={inputMessage}
               onChange={(e) => setInputMessage(e.target.value)}
               onKeyPress={handleKeyPress}
-              placeholder="Ask about your health..."
-              className="w-full bg-transparent text-white px-4 py-3 resize-none font-medium focus:outline-none placeholder-gray-600 text-[15px] tracking-wide"
+              placeholder="Describe your pain or injury (e.g. Lower back pain for 3 days)..."
+              className="w-full bg-transparent text-white px-5 py-4 resize-none font-medium focus:outline-none placeholder-gray-600 text-[15px] tracking-wide"
               rows={1}
-              style={{ minHeight: '48px', maxHeight: '120px' }}
+              style={{ minHeight: '56px', maxHeight: '150px' }}
             />
             <button
               onClick={() => handleSendMessage()}
               disabled={!inputMessage.trim() || isTyping}
-              className={`p-3.5 ml-2 rounded-xl transition-all flex-shrink-0 ${
+              className={`p-4 ml-3 rounded-xl transition-all flex-shrink-0 ${
                 inputMessage.trim() && !isTyping
-                  ? 'bg-[#ccff00] hover:bg-[#b3e600] text-[#111] shadow-lg shadow-[#ccff00]/20'
+                  ? 'bg-[#ccff00] hover:bg-[#b3e600] text-[#111] shadow-lg shadow-[#ccff00]/20 active:scale-95'
                   : 'bg-[#222] text-gray-500 cursor-not-allowed'
               }`}
             >
-              <Send size={20} />
+              <Send size={22} />
             </button>
           </div>
           
-          <div className="text-center mt-4">
-            <p className="text-[10px] text-gray-600 uppercase tracking-widest font-bold">
-              AI responses are for informational purposes only. Consult a doctor for medical advice.
+          <div className="text-center mt-5">
+            <p className="text-[10px] text-gray-600 uppercase tracking-[0.2em] font-black ">
+              AI Physiotherapy plans are for guidance only. See a professional if pain persists.
             </p>
           </div>
         </div>

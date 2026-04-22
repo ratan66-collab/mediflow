@@ -2,6 +2,7 @@ import { Link, Outlet, useLocation } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import { Activity, LayoutDashboard, Search, Stethoscope, Bot, FileText } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
+import VoiceAssistantButton from './VoiceAssistantButton';
 
 export default function Layout() {
     const location = useLocation();
@@ -90,6 +91,9 @@ export default function Layout() {
                     <BottomNavLink to="/ai-assistant" icon={<Bot size={24} />} active={isActive('/ai-assistant')} />
                 </div>
             </div>
+
+            {/* Global Voice Assistant Button (Protected) */}
+            <VoiceAssistantButton />
         </div>
     );
 }

@@ -9,8 +9,7 @@ import AIAssistant from './pages/AIAssistant';
 import Login from './pages/Login';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 
-// 1. We replace the clunky default widget with our custom sleek button
-import VoiceAssistantButton from './components/VoiceAssistantButton';
+// VoiceAssistantButton removed from here
 
 const ProtectedRoute = ({ children }) => {
   const { user, loading } = useAuth();
@@ -57,9 +56,7 @@ function App() {
         </Routes>
       </BrowserRouter>
 
-      {/* 2. Custom Sleek Voice Button */}
-      <VoiceAssistantButton />
-
+      {/* VoiceAssistantButton moved to Layout.jsx */}
     </AuthProvider>
   );
 }
