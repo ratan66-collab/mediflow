@@ -43,7 +43,16 @@ export const AuthProvider = ({ children }) => {
             }
 
             try {
-                const { data: { session }, error } = await supabase.auth.getSession();
+                // Add timeout to prevent infinite loading
+                const timeoutPromise = new Promise((_, reject) => 
+                    setTimeout(() => reject(new Error('Session fetch timeout')), 5000)
+                );
+
+                const { data: { session }, error } = await Promise.race([
+                    supabase.auth.getSession(),
+                    timeoutPromise
+                ]);
+
                 if (error && error.message.includes('fetch')) {
                     applyFallback();
                     return;

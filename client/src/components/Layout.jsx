@@ -1,6 +1,6 @@
 import { Link, Outlet, useLocation } from 'react-router-dom';
 import { useState, useEffect } from 'react';
-import { Activity, FileText, Accessibility, Menu } from 'lucide-react';
+import { Activity, LayoutDashboard, Search, Stethoscope, Bot, FileText } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 
 export default function Layout() {
@@ -9,7 +9,7 @@ export default function Layout() {
     const isActive = (path) => location.pathname === path;
 
     // Calculate Health Score
-    const [score, setScore] = useState(0);
+    const [score, setScore] = useState(0); 
 
     useEffect(() => {
         if (!user?.email) return;
@@ -22,103 +22,72 @@ export default function Layout() {
                     if (data.metrics) {
                         let calculated = 100;
                         const deduction = 10;
-
                         data.metrics.forEach(m => {
                             if (m.status !== 'Normal') {
                                 calculated -= deduction;
                             }
                         });
-
-                        setScore(Math.max(0, calculated)); // floor at 0
+                        setScore(Math.max(0, calculated)); 
                     }
                 } catch (e) {
                     console.error("Score calc error", e);
                 }
-            } else {
-                setScore(0);
             }
         };
 
-        // Initial load
         calculateScore();
-
-        // Listen for live updates when an analysis finishes
         window.addEventListener('analysisUpdated', calculateScore);
         
         return () => window.removeEventListener('analysisUpdated', calculateScore);
     }, [user, location.pathname]);
 
     return (
-        <div className="flex h-screen bg-racing-dark text-racing-text font-sans overflow-hidden">
+        <div className="flex h-screen bg-[#111111] text-gray-200 font-sans overflow-hidden">
             {/* Left Sidebar (Desktop) */}
-            <aside className="w-64 bg-[#111] border-r border-[#222] hidden md:flex flex-col">
-                <div className="p-6 border-b border-[#222] flex items-center gap-3">
-                    <div className="w-10 h-10 bg-racing-accent/10 rounded-xl flex items-center justify-center">
-                        <Activity className="text-racing-accent w-6 h-6" />
-                    </div>
-                    <h1 className="text-2xl font-display tracking-widest uppercase text-white m-0">
-                        MediFlow
+            <aside className="w-64 bg-[#1a1a1a] border-r border-[#2a2a2a] hidden md:flex flex-col">
+                <div className="p-6 flex items-center gap-3 mt-2">
+                    <Activity className="text-[#ccff00] w-7 h-7" />
+                    <h1 className="text-xl font-bold tracking-widest uppercase text-white m-0">
+                        MEDIFLOW
                     </h1>
                 </div>
 
-                <nav className="flex-1 p-6 space-y-4">
-                    <SidebarNavLink to="/" icon={<Activity />} label="DASHBOARD" active={isActive('/')} />
-                    <SidebarNavLink to="/reports" icon={<FileText />} label="DOCUMENTS" active={isActive('/reports')} />
-                    <SidebarNavLink to="/physio" icon={<Accessibility />} label="PHYSIO AI" active={isActive('/physio')} />
+                <nav className="flex-1 px-4 py-6 space-y-2 mt-4 text-sm font-semibold tracking-wide">
+                    <SidebarNavLink to="/" icon={<LayoutDashboard size={20} />} label="DASHBOARD" active={isActive('/')} />
+                    <SidebarNavLink to="/reports" icon={<FileText size={20} />} label="SAVED REPORTS" active={isActive('/reports')} />
+                    <SidebarNavLink to="/ai-assistant" icon={<Bot size={20} />} label="AI ASSISTANT" active={isActive('/ai-assistant')} />
                 </nav>
 
-                <div className="p-6 border-t border-[#222]">
-                    <div className="p-5 rounded-2xl bg-racing-card border-2 border-[#2a2a2a] relative overflow-hidden">
-                        <h3 className="text-racing-textMuted font-display tracking-widest text-lg uppercase mb-2">Health Rating</h3>
-                        <div className={`font-display text-5xl tracking-widest ${score < 70 ? 'text-[#ff4b22]' : 'text-[#4ade80]'}`}>
-                            {score}<span className="text-2xl text-gray-500">%</span>
+                <div className="p-4">
+                    <div className="px-4 py-5 rounded-2xl bg-[#222222] border border-[#333333] relative overflow-hidden">
+                        <h3 className="text-gray-400 text-xs font-semibold uppercase tracking-wider mb-2">Health Score</h3>
+                        <div className="flex items-end gap-1">
+                            <span className="text-3xl font-bold text-[#ccff00]">{score}</span>
+                            <span className="text-xl text-gray-400 font-normal pb-0.5">%</span>
                         </div>
-                        <div className="w-full bg-[#111] h-3 mt-4 rounded-full overflow-hidden border border-[#333]">
+                        <div className="w-full bg-[#111111] h-2 mt-3 rounded-full overflow-hidden">
                             <div
-                                className={`h-full transition-all duration-1000 ${score < 70 ? 'bg-[#ff4b22]' : 'bg-[#4ade80]'}`}
+                                className="h-full bg-[#ccff00] transition-all duration-1000"
                                 style={{ width: `${score}%` }}
                             />
                         </div>
-                        <p className="text-xs text-racing-textMuted mt-3 font-medium">Based on recent analysis.</p>
+                        <p className="text-[10px] text-gray-400 mt-2">Based on recent analysis.</p>
                     </div>
                 </div>
             </aside>
 
             {/* Main Wrapper */}
-            <div className="flex-1 flex flex-col min-w-0">
-                {/* Top Header - mimicking the reference "Become Pro" area */}
-                <div className="flex justify-between items-center px-6 pt-6 pb-4 bg-[#111111] border-b border-[#222]">
-                    <div className="flex gap-4">
-                        <div className="flex bg-[#222222] rounded-full p-1 border border-[#333]">
-                            <button className="px-3 py-1 bg-[#1a1a1a] rounded-full shadow-md">
-                                <Activity size={18} className="text-gray-500" />
-                            </button>
-                            <button className="px-3 py-1">
-                                <FileText size={18} className="text-[#bef264]" />
-                            </button>
-                        </div>
-                    </div>
-                    <button
-                        onClick={signOut}
-                        className="px-6 py-2 border border-[#bef264] rounded-full text-white font-display text-lg tracking-widest hover:bg-[#bef26411] transition-colors"
-                    >
-                        SIGN OUT
-                    </button>
-                </div>
-
+            <div className="flex-1 flex flex-col min-w-0 bg-[#111111]">
                 {/* Main Content Area (scrollable) */}
-                <main className="flex-1 overflow-auto px-6 pb-32 scrollbar-none">
+                <main className="flex-1 overflow-auto p-8 scrollbar-none">
                     <Outlet />
                 </main>
 
                 {/* Floating Bottom Nav Pill (Mobile Only) */}
-                <div className="fixed bottom-6 left-1/2 -translate-x-1/2 w-[90%] max-w-md bg-white rounded-full py-3 px-6 shadow-2xl flex md:hidden justify-between items-center z-50">
-                    <BottomNavLink to="/" icon={<Activity size={24} />} active={isActive('/')} />
+                <div className="fixed bottom-6 left-1/2 -translate-x-1/2 w-[90%] max-w-md bg-[#222] rounded-full py-3 px-6 shadow-2xl flex md:hidden justify-between items-center z-50">
+                    <BottomNavLink to="/" icon={<LayoutDashboard size={24} />} active={isActive('/')} />
                     <BottomNavLink to="/reports" icon={<FileText size={24} />} active={isActive('/reports')} />
-                    <BottomNavLink to="/physio" icon={<Accessibility size={24} />} active={isActive('/physio')} />
-                    <div className="w-10 h-10 rounded-full bg-racing-dark flex items-center justify-center overflow-hidden border-2 border-white">
-                        <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Felix" alt="User" />
-                    </div>
+                    <BottomNavLink to="/ai-assistant" icon={<Bot size={24} />} active={isActive('/ai-assistant')} />
                 </div>
             </div>
         </div>
@@ -129,8 +98,8 @@ function SidebarNavLink({ to, icon, label, active }) {
     return (
         <Link
             to={to}
-            className={`flex items-center gap-4 px-4 py-3 rounded-xl transition-all duration-300 font-display tracking-wide text-2xl uppercase ${active
-                ? 'bg-racing-accent text-[#111111] shadow-lg shadow-racing-accent/20'
+            className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300 ${active
+                ? 'bg-[#ccff00] text-[#111111] shadow-lg'
                 : 'text-gray-400 hover:bg-[#222] hover:text-white'
                 }`}
         >
@@ -146,12 +115,13 @@ function BottomNavLink({ to, icon, active }) {
     return (
         <Link
             to={to}
-            className={`relative p - 2 rounded - xl transition - all duration - 300 ${active ? 'bg-racing-dark text-racing-accent' : 'text-gray-900 hover:text-racing-accent'} `}
+            className={`relative p-2 rounded-xl transition-all duration-300 ${active ? 'text-[#ccff00]' : 'text-gray-500 hover:text-[#ccff00]'} `}
         >
             {icon}
             {active && (
-                <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-4 h-[3px] bg-racing-accent rounded-full" />
+                <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-4 h-[3px] bg-[#ccff00] rounded-full" />
             )}
         </Link>
     );
 }
+

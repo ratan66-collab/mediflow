@@ -16,3 +16,7 @@ build
 # Logs and documents
 *.log
 *.pdf
+*.db
+call_assistant/ngrok
+call_assistant/.venv/
+server/.venv/

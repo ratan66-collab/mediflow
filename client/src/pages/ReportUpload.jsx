@@ -374,7 +374,7 @@ export default function ReportUpload() {
                                 <div className="min-w-0 flex-1">
                                     <h3 className="text-white font-bold text-lg leading-tight truncate">{doc.name}</h3>
                                     <div className="flex items-center gap-2 text-xs text-gray-500 mt-1 font-bold uppercase tracking-wider">
-                                        <Calendar size={12} /> {doc.date} &bull; {doc.metrics ? `${doc.metrics.length} METRICS` : 'UNANALYZED FILE'}
+                                        <Calendar size={12} /> {doc.date} &bull; {doc.metrics ? 'ANALYZED FILE' : 'UNANALYZED FILE'}
                                     </div>
                                 </div>
                             </div>
@@ -427,20 +427,6 @@ export default function ReportUpload() {
                                     </div>
                                 )}
 
-                                {/* Metrics Grid */}
-                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                                    {doc.metrics?.map((m, i) => (
-                                        <div key={i} className="p-4 rounded-xl bg-racing-card border border-[#2a2a2a] flex justify-between items-center transition-all hover:border-[#444]">
-                                            <div>
-                                                <div className="text-xs text-gray-500 font-bold uppercase tracking-wider mb-1">{m.name}</div>
-                                                <div className="text-lg font-bold text-white tracking-wide">{m.value} <span className="text-[10px] text-gray-500 uppercase">{m.unit}</span></div>
-                                            </div>
-                                            <span className={`text-[10px] px-3 py-1.5 rounded-md border font-bold uppercase tracking-widest ${m.status === 'Normal' ? 'bg-[#1a2f22] text-[#4ade80] border-[#22c55e]/50' : 'bg-red-500/10 text-red-500 border-red-500/30'}`}>
-                                                {m.status}
-                                            </span>
-                                        </div>
-                                    ))}
-                                </div>
                             </div>
                         )}
                     </div>

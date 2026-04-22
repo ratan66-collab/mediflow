@@ -29,7 +29,9 @@ def analyze_medical_report(file_bytes: bytes, mime_type: str):
       "report_date": "YYYY-MM-DD or null",
       "test_type": "string (e.g. Blood Test, MRI, X-Ray)",
       "overall_summary": "string (2-3 sentences completely summarizing the report)",
-      "critical_findings": ["string", "string"],
+      "symptoms": ["Detailed findings and observations. For each symptom, you MUST say exactly why it was flagged using the phrase 'due to' followed by the specific metric and value (e.g., 'Anemia - due to Low Hemoglobin (10.2 g/dL)').", "string"],
+      "precautions": ["A detailed list of medical precautions, lifestyle adjustments, and recommendations based on the overall report data.", "string"],
+      "critical_findings": ["List any values that are in the 'Critical' or 'High' range with their specific reading.", "string"],
       "metrics": [
         {
           "name": "string (e.g. Hemoglobin)",
