@@ -74,7 +74,6 @@ check_patient_name = st.text_input("Patient name to check (optional)", key="chec
 
 if st.button("Check appointments"):
     try:
-        # Note: your backend.py uses POST for this route, so we use requests.post here
         payload = {"date": appointments_date.isoformat()}
         if check_patient_name.strip():
             payload["patient_name"] = check_patient_name.strip()
@@ -84,6 +83,6 @@ if st.button("Check appointments"):
         if not data:
             st.info("No active appointments found for this date.")
         else:
-            st.dataframe(data, use_container_width=True, hide_index=True)
+            st.dataframe(data, width='stretch', hide_index=True)
     except requests.exceptions.RequestException as exc:
         st.warning(f"Could not load appointments: {exc}")
