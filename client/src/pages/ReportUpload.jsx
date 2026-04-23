@@ -92,12 +92,16 @@ export default function ReportUpload() {
             setDocuments(updatedDocs);
 
             if (user?.email) {
-                localStorage.setItem("user_documents_" + user.email, JSON.stringify(updatedDocs));
+                try {
+                    localStorage.setItem("user_documents_" + user.email, JSON.stringify(updatedDocs));
+                } catch (storageError) {
+                    console.warn("Local storage limit reached. File will be kept in memory for this session.");
+                }
             }
             
             setQueue([]);
         } catch(e) {
-            setError("Storage limits hit or read failed! Please clear some old documents.");
+            setError("Cannot process document format. Please try another PDF.");
         } finally {
             setLoading(false);
         }
@@ -160,7 +164,9 @@ export default function ReportUpload() {
         if (user?.email) {
             try {
                 localStorage.setItem("user_documents_" + user.email, JSON.stringify(updatedDocs));
-            } catch(e){}
+            } catch(e){
+                console.warn("Storage limits hit. Results kept in memory.");
+            }
         }
 
         setQueue([]); // Clear Queue
